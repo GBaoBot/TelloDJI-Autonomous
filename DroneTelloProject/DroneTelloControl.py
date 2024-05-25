@@ -74,11 +74,11 @@ class TelloControl(TelloDJI):
                 else:
                     print("No frame!!!")
 
-                if cv2.waitKey(1) & 0xFF == ord('q'):
+                if cv2.waitKey(1) & 0xFF == 27:
                     break
 
-                self.update_velocity()
-                time.sleep(0.1)  # Update rate of 10 times per second
+                self.update()
+                # time.sleep(0.1)  # Update rate of 10 times per second
         finally:
             listener.stop()
             listener.join()
@@ -87,7 +87,7 @@ class TelloControl(TelloDJI):
             self.tello.end()
 
 def try_control():
-    drone = TelloControl()
+    drone = TelloControl(50)
     drone.control()
 
 if __name__ == '__main__':

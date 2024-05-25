@@ -85,5 +85,6 @@ class TelloDJI(object):
 if __name__ == '__main__': 
     # try_control() 
     drone = TelloDJI()
+    drone.connect()
     print(drone.battery())
     # battery_tello()
