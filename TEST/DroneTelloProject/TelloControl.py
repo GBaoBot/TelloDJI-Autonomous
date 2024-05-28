@@ -1,7 +1,7 @@
 import cv2
 import time
 from pynput import keyboard
-from DroneTello import TelloDJI
+from TelloDJI import TelloDJI
 
 class TelloControl(TelloDJI):
     def __init__(self, speed=10):

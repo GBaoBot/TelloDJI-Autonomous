@@ -49,6 +49,11 @@ class TelloDJI(object):
         frame = self.frame_read.frame 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) 
         return frame 
+    
+    def resize_frame(self, frame, height, width) {
+        frame = self.cv2.resize(frame, (width, height))
+        return frame
+    }
 
 
     def init_model(self): 

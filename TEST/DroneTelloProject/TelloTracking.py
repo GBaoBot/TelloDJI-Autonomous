@@ -1,4 +1,4 @@
-from DroneTello import *
+from TelloDJI import *
 import numpy as np
 
 class TelloTrack(TelloDJI):
