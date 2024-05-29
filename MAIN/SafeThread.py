@@ -2,7 +2,8 @@ import threading
 
 class SafeThread (threading.Thread):
     def __init__(self, target) -> None:
-        super().__init__(self)
+        threading.Thread.__init__(self)
+        self.daemon = True
         self.target = target
         self.stopEvent = threading.Event()
 

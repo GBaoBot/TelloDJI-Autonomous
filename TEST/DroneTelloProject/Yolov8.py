@@ -3,7 +3,7 @@ import cv2
 
 # Load YOLO model
 model = YOLO("yolov8n.pt")
-model.to('cuda')
+# model.to('cuda')
 
 # Load video
 path = 'C:\\Users\\GiaBao\\Documents\\VSC\\Robot\\TelloDJI-Autonomous\\DroneTelloProject\\Data\\test.mp4'
@@ -21,6 +21,7 @@ while True:
     frame = cv2.flip(frame, 1)
 
     results = model.track(frame, persist=True)
+    print(results[0][0].boxes.xyxy)
     detected_frame = results[0].plot()
     cv2.imshow('frame', detected_frame)
 

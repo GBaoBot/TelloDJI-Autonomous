@@ -1,4 +1,4 @@
-# from djitellopy import Tello
+from djitellopy import Tello
 import threading
 import cv2
 
@@ -7,7 +7,7 @@ def video_stream():
     cap = cv2.VideoCapture(0)
     while True:
         ret, frame = cap.read()
-        frame = cv2.resize(frame, (480, 480))
+        frame = cv2.resize(frame, (640, 480))
         if frame is not None: 
             print("Received")
             cv2.imshow("frame", frame)
