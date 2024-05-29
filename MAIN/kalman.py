@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
-
-class kalman():
+class clKalman():
     def __init__(self):
         '''
         Init local variables and Kalman filter
@@ -10,17 +9,10 @@ class kalman():
         # 2d Kalman
         self.kalman = cv2.KalmanFilter(4, 2)
 
-        self.kalman.measurementMatrix = np.array([[1, 0, 0, 0], 
-                                                  [0, 1, 0, 0]], np.float32)
-        self.kalman.transitionMatrix = np.array([[1, 0, 1, 0],
-                                                 [0, 1, 0, 1],
-                                                 [0, 0, 1, 0], 
-                                                 [0, 0, 0, 1]],np.float32)
+        self.kalman.measurementMatrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], np.float32)
+        self.kalman.transitionMatrix = np.array([[1, 0, 1, 0],[0, 1, 0, 1],[0, 0, 1, 0], [0, 0, 0, 1]],np.float32)
 
-        self.kalman.processNoiseCov = np.array([[1, 0, 0 ,0],
-                                                [0, 1, 0, 0],
-                                                [0, 0, 1, 0],
-                                                [0, 0, 0, 1]],np.float32) * 0.01
+        self.kalman.processNoiseCov = np.array([[1, 0, 0 ,0],[0, 1, 0, 0],[0, 0, 1, 0],[0, 0, 0, 1]],np.float32) * 0.01
 
         # state variables
         self.last_measurement = np.array((2, 1), np.float32)
