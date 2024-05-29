@@ -141,7 +141,7 @@ class TelloConnect:
                     ev['val'] = str(ret)
                 
             # scheduler base time ~ 100 ms
-            self.timer_ev.wait(0.05)
+            self.timer_ev.wait(0.1)
                 
             self.count +=1
         except Exception:
@@ -232,7 +232,7 @@ class TelloConnect:
         _ = self.sock_cmd.sendto(cmd, self.telloaddr)
 
         # wait for ans answer over UDP
-        self.cmd_recv_ev.wait(0.15)
+        self.cmd_recv_ev.wait(0.2)
  
         # prepare for next received message
         self.cmd_recv_ev.clear()
