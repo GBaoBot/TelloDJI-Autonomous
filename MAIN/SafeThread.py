@@ -1,6 +1,5 @@
 import threading    
 
-
 class SafeThread(threading.Thread):
     """
     Safe cyclic thread, with stop function 
