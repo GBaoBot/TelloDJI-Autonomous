@@ -17,7 +17,6 @@ class BrainTrack(BrainDetect):
         
         #init 
         self.track = False
-
         self.frame = None
         self.det = None
         self.tp = None
@@ -41,6 +40,10 @@ class BrainTrack(BrainDetect):
         self.khscale = 4
         self.distscale = 3
         
+        # Set up model
+        # self.setUpYOLOv8(MODEL)
+        
+        # Run thread Tracking
         self.wt = SafeThread(target=self.__worker).start()
         
     def set_tracking(self, HORIZONTAL=False, VERTICAL=True, DISTANCE=True, ROTATION=True):
