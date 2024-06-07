@@ -20,8 +20,8 @@ while True:
     # Process frame
     frame = cv2.flip(frame, 1)
 
-    results = model.track(frame, persist=True)
-    print(results[0][0].boxes.xyxy)
+    results = model.track(frame, tracker="botsort.yaml", persist=True, verbose=False)
+    # print(results[0][0].boxes.xyxy)
     detected_frame = results[0].plot()
     cv2.imshow('frame', detected_frame)
 

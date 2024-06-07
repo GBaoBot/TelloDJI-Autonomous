@@ -1,11 +1,9 @@
 from djitellopy import Tello 
-import cv2 
-from SafeThread import *
 from queue import Queue
-# import time
-# from pynput import keyboard
-from BrainControl import *
-from BrainTrack import *
+import cv2 
+from utils.SafeThread import *
+from utils.BrainControl import *
+from utils.BrainTrack import *
 # This would be the main object of tello, all the process will be conducted in another file
  
 class TelloMain(object):  
@@ -127,7 +125,7 @@ class TelloMain(object):
         self.connect()
         self.camera_on()
         self.start_communication()
-        cv2.namedWindow('frame')
+        # cv2.namedWindow('frame')
         
         self.brainControl = BrainControl(self, self.speed)
         self.brainControl.startReadFromKeyboard()
@@ -151,14 +149,20 @@ class TelloMain(object):
             self.stop_communication()
             cv2.destroyAllWindows() 
 
+
     def modeTrack(self):
         self.connect()
         self.camera_on()
         self.start_communication()
         cv2.namedWindow('frame')
-        
+        videow = cv2.VideoWriter('out.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 60, (self.frame_size))
+        writevideo = False
+        # Track
         self.brainTrack = BrainTrack(self)
         self.brainTrack.set_tracking()
+        self.brainTrack.onTracking()
+        
+        # Control
         self.brainControl = BrainControl(self, self.speed)
         self.brainControl.startReadFromKeyboard()
        
@@ -174,9 +178,15 @@ class TelloMain(object):
                     
                     cv2.imshow('frame', frame)
                     
-                    if cv2.waitKey(self.pSpeedVideo) & 0xFF == 27:
+                    k = cv2.waitKey(self.pSpeedVideo) & 0xFF
+                    if k == 27:
                         break
-                
+                    if k == ord('v'):
+                        if writevideo == False : writevideo = True
+                        else: writevideo = False
+                    
+                    if writevideo == True:
+                        videow.write(frame)
                 except Exception as e:
                     print(f'Error in mode_control: {e}')
                     break
@@ -186,13 +196,32 @@ class TelloMain(object):
             self.stop_communication()
             cv2.destroyAllWindows()
             
+            
     def get_battery(self):
         return self.tello.get_battery()
         
+        
 if __name__ == "__main__":
-    tello = TelloMain(30)
-    tello.modeTrack()
+    tello = TelloMain(23)
     
-    # tello.connect()
-    # print(tello.get_battery())
+    print("Please choose option:")
+    print("- Option 0: Show battery")
+    print("- Option 1: Control")
+    print("- Option 2: Track Human who raises hand")
+    
+    print("Please type the option number (Eg: 1 or 2...)")
+    option = input("Choose your option: ")
+    
+    if option == '0':
+        tello.connect()
+        print(f"Battery: {tello.get_battery()}")
+    elif option == '1':
+        print("You chose to CONTROL!")
+        tello.modeControl()
+    elif option == '2':
+        print("You chose to TRACK!")
+        tello.modeTrack()
+    else:
+        print("Invalid!")
+    # k = input()
         
