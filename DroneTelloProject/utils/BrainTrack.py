@@ -1,6 +1,6 @@
-from SafeThread import *
-from BrainDetect import *
-from Kalman import *
+from utils.SafeThread import *
+from utils.BrainDetect import *
+from utils.Kalman import *
 # from TelloMain import *
 class BrainTrack(BrainDetect):
     def __init__(self, tello, CONFIDENCE=0.4, DETECT=0) -> None:
@@ -74,10 +74,6 @@ class BrainTrack(BrainDetect):
         self.frame = frame
     
     def __worker(self):
-        
-        # Time Base
-        # self.ticker.wait(0.005)
-        
         # process image, command tello
         if self.frame is not None and self.cycle_counter % self.cycle_activation == 0:
             dist = 0
@@ -89,7 +85,7 @@ class BrainTrack(BrainDetect):
             tp = None
             det = None
             if self.tracking:
-                tp, det = self.detect(frame, trackWithPose=True)
+                tp, det = self.detect(frame, trackWithPose=False)
             
             if det is not None and len(det) > 0:
                 self.det = det
@@ -149,19 +145,19 @@ class BrainTrack(BrainDetect):
             
         
     def draw_detections(self,img):
-
+        battery = self.tello.get_battery()
+        
         if img is not None:
 
             h,w = img.shape[:2]
+            battery_info = f"Battery: {battery}"
+            tracking_info = f"Tracking: {self.isTracking()}"
+            cv2.putText(img, battery_info, (10, h-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_4)
+            cv2.putText(img, tracking_info, (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_4)
 
             if self.det is not None:            
                 for val in self.det:
                     cv2.rectangle(img,(val[0],val[1]),(val[0]+val[2],val[1]+val[3]),[0,255,0],2)
-                    
                     cv2.circle(img,(self.tp[0],self.tp[1]),3,[0,0,255],-1)
                 cv2.circle(img,(int(w/2),int(h/2)),4,[0,255,0],1)
                 cv2.line(img,(int(w/2),int(h/2)),(self.tp[0],self.tp[1]),[0,255,0],2)
-
-    
-        
-        

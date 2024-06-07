@@ -17,6 +17,7 @@ class TelloMain(object):
         self.frame_size = (640, 480)
         self.videoEvent = threading.Event()
         self.pSpeedVideo = 1
+        self.clickCoor = (0, 0)
         
         # Control
         self.shouldStop = True
@@ -63,6 +64,12 @@ class TelloMain(object):
         self.videoThread.stop()
 
 
+    def mouse_callback(self, event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self.clickCoor = (x, y)
+            print(f"Clicked at: {self.clickCoor}")
+
+
     def __video(self):
         while True:
             try: 
@@ -80,6 +87,7 @@ class TelloMain(object):
 
     def get_frame(self): 
         return self.q.get()
+    
     
     def resize_frame(self, height, width):
         self.frame_size = (width, height)
@@ -155,6 +163,7 @@ class TelloMain(object):
         self.camera_on()
         self.start_communication()
         cv2.namedWindow('frame')
+        cv2.setMouseCallback("frame", self.mouse_callback)
         videow = cv2.VideoWriter('out.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 60, (self.frame_size))
         writevideo = False
         # Track
@@ -170,10 +179,12 @@ class TelloMain(object):
             while True:
                 try: 
                     frame = self.get_frame()
-                    
                     if frame is None: continue
                     
                     self.brainTrack.process_frame(frame)
+                    if self.clickCoor != (0, 0):
+                        self.brainTrack.process_clickCoor(self.clickCoor)
+                        self.clickCoor = (0, 0)
                     self.brainTrack.draw_detections(frame)
                     
                     cv2.imshow('frame', frame)
@@ -202,7 +213,7 @@ class TelloMain(object):
         
         
 if __name__ == "__main__":
-    tello = TelloMain(23)
+    tello = TelloMain(10)
     
     print("Please choose option:")
     print("- Option 0: Show battery")
