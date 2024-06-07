@@ -2,7 +2,7 @@
 
 I consulted from this GitHub: https://github.com/fvilmos/tello_object_tracking/tree/master
 
-In this project, I used a DJI Tello EDU drone to do task of object following. Currently, there are 2 main modes the drone can operate: Control and Tracking. 
+In this project, I used a DJI Tello EDU drone to do task of object following. Currently, there are 2 main modes the drone can operate: Control and Tracking. You can check the result in folder "videos".
 
 * Control Mode (1): Users manually control the drone with keyboard. (For example: press 't' to take off, 'l' to land, 'w' to fly up, etc.)
 * Tracking Mode (2): The drone detect people in frame and start to follow one of them right after he raises hand. When he put his hand down, it still follows him unless there is someone else raising their hand. This tracking mode can be turned on or off by pressing 'm' on keyboard.
