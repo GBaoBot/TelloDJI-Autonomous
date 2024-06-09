@@ -50,6 +50,9 @@ class TelloMain(object):
     def camera_on(self):
         try:
             self.tello.streamon()
+            # self.tello.set_video_fps(self.tello.FPS_30)
+            # self.tello.set_video_resolution(self.tello.RESOLUTION_480P)
+            # self.tello.set_video_bitrate(self.tello.BITRATE_AUTO)
             self.frame_read = self.tello.get_frame_read()
             # self.videoEvent.wait(1)  # Wait for the stream to initialize properly
             
@@ -162,14 +165,43 @@ class TelloMain(object):
         self.connect()
         self.camera_on()
         self.start_communication()
+        
+        # Set up openCV
         cv2.namedWindow('frame')
         cv2.setMouseCallback("frame", self.mouse_callback)
         videow = cv2.VideoWriter('out.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 60, (self.frame_size))
         writevideo = False
+        
         # Track
         self.brainTrack = BrainTrack(self)
         self.brainTrack.set_tracking()
         self.brainTrack.onTracking()
+        print("There are 2 ways of tracking:")
+        print("- Option 1: Track who raises their hand")
+        print("- Option 2: Track who you clicked (chose) on window")
+        print("Please type the option number (Eg: 1 or 2...)")
+        
+        
+        didChooseOption = False
+        while not didChooseOption:
+            typeOfTracking = input("Choose your option: ")
+            didChooseOption = True
+            if typeOfTracking == '1':
+                print("You chose track who raises hand.")
+                print("----------------------")
+                self.brainTrack.setTrackingWithPose(True)
+                
+            elif typeOfTracking == '2':
+                print("You chose to click who to track.")
+                print("----------------------")
+                self.brainTrack.setTrackingWithPose(False)
+            else:
+                didChooseOption = False
+                print("Oops! It seems you pressed wrong button. I forgive you, try again!")
+                print("----------------------")
+            print()
+            
+                
         
         # Control
         self.brainControl = BrainControl(self, self.speed)
@@ -213,7 +245,7 @@ class TelloMain(object):
         
         
 if __name__ == "__main__":
-    tello = TelloMain(10)
+    tello = TelloMain(40)
     
     print("Please choose option:")
     print("- Option 0: Show battery")
@@ -221,18 +253,31 @@ if __name__ == "__main__":
     print("- Option 2: Track Human who raises hand")
     
     print("Please type the option number (Eg: 1 or 2...)")
-    option = input("Choose your option: ")
     
-    if option == '0':
-        tello.connect()
-        print(f"Battery: {tello.get_battery()}")
-    elif option == '1':
-        print("You chose to CONTROL!")
-        tello.modeControl()
-    elif option == '2':
-        print("You chose to TRACK!")
-        tello.modeTrack()
-    else:
-        print("Invalid!")
-    # k = input()
+    
+    didChooseOption = False
+    while not didChooseOption:
+        option = input("Choose your option: ")
+        didChooseOption = True
+        
+        if option == '0':
+            tello.connect()
+            print(f"Battery: {tello.get_battery()}")
+        elif option == '1':
+            print("You chose to CONTROL!")
+            print("----------------------")
+            print()
+            tello.modeControl()
+        elif option == '2':
+            print("You chose to TRACK!")
+            print("----------------------")
+            print()
+            tello.modeTrack()
+        else:
+            didChooseOption = False
+            print("Oops! It seems you pressed wrong button. I forgive you, try again!")
+            print("----------------------")
+            print()
+        
+        
         

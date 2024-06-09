@@ -27,9 +27,10 @@ class BrainTrack(BrainDetect):
         self.use_rotation_tracking = True
         self.use_horizontal_tracking = True
         self.use_distance_tracking = True
+        self.isTrackingwithPose = False
         
         # distance between object and drone
-        self.dist_setpoint = 140
+        self.dist_setpoint = 150
         self.area_setpoint = 25
         
         # processing frequency (to spare CPU time)
@@ -69,6 +70,9 @@ class BrainTrack(BrainDetect):
         
     def isTracking(self):
         return self.tracking
+    
+    def setTrackingWithPose(self, isTrackwithPose):
+        self.isTrackingwithPose = isTrackwithPose
         
     def process_frame(self, frame):
         self.frame = frame
@@ -85,7 +89,7 @@ class BrainTrack(BrainDetect):
             tp = None
             det = None
             if self.tracking:
-                tp, det = self.detect(frame, trackWithPose=False)
+                tp, det = self.detect(frame, trackWithPose=self.isTrackingwithPose)
             
             if det is not None and len(det) > 0:
                 self.det = det
@@ -153,7 +157,7 @@ class BrainTrack(BrainDetect):
             battery_info = f"Battery: {battery}"
             tracking_info = f"Tracking: {self.isTracking()}"
             cv2.putText(img, battery_info, (10, h-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_4)
-            cv2.putText(img, tracking_info, (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_4)
+            cv2.putText(img, tracking_info, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_4)
 
             if self.det is not None:            
                 for val in self.det:
