@@ -9,7 +9,7 @@ import numpy as np
 from ultralytics import YOLO
 
 '''
-This is just for testing
+This file is just for testing Pose model
 '''
 
 class BrainPose_Mediapipe:

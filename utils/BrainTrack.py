@@ -3,7 +3,7 @@ from utils.BrainDetect import *
 from utils.Kalman import *
 # from TelloMain import *
 class BrainTrack(BrainDetect):
-    def __init__(self, tello, CONFIDENCE=0.4, DETECT=0) -> None:
+    def __init__(self, tello, CONFIDENCE=0.3, DETECT=0) -> None:
         super().__init__(CONFIDENCE, DETECT)
         
         self.tello = tello
@@ -75,9 +75,13 @@ class BrainTrack(BrainDetect):
         self.isTrackingwithPose = isTrackwithPose
         
     def process_frame(self, frame):
+        # frame = cv2.resize()
         self.frame = frame
     
     def __worker(self):
+        # time base
+        self.ticker.wait(0.005)
+        
         # process image, command tello
         if self.frame is not None and self.cycle_counter % self.cycle_activation == 0:
             dist = 0

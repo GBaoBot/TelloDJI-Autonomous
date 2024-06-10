@@ -1,6 +1,7 @@
 from djitellopy import Tello 
 from queue import Queue
 import cv2 
+import time
 from utils.SafeThread import *
 from utils.BrainControl import *
 from utils.BrainTrack import *
@@ -14,10 +15,12 @@ class TelloMain(object):
         # Video
         self.q = Queue()
         self.q.maxsize = 1
-        self.frame_size = (640, 480)
+
+        self.frame_size = (640, 640)
         self.videoEvent = threading.Event()
         self.pSpeedVideo = 1
         self.clickCoor = (0, 0)
+        self.FPS = 30
         
         # Control
         self.shouldStop = True
@@ -50,11 +53,8 @@ class TelloMain(object):
     def camera_on(self):
         try:
             self.tello.streamon()
-            # self.tello.set_video_fps(self.tello.FPS_30)
-            # self.tello.set_video_resolution(self.tello.RESOLUTION_480P)
-            # self.tello.set_video_bitrate(self.tello.BITRATE_AUTO)
             self.frame_read = self.tello.get_frame_read()
-            # self.videoEvent.wait(1)  # Wait for the stream to initialize properly
+            # self.videoEvent.wait(0.5)  # Wait for the stream to initialize properly
             
             if self.videoThread.is_alive() is not True:  self.videoThread.start()
         except Exception as e:
@@ -161,7 +161,7 @@ class TelloMain(object):
             cv2.destroyAllWindows() 
 
 
-    def modeTrack(self):
+    def modeTrack(self, option='2'):
         self.connect()
         self.camera_on()
         self.start_communication()
@@ -182,24 +182,13 @@ class TelloMain(object):
         print("Please type the option number (Eg: 1 or 2...)")
         
         
-        didChooseOption = False
-        while not didChooseOption:
-            typeOfTracking = input("Choose your option: ")
-            didChooseOption = True
-            if typeOfTracking == '1':
-                print("You chose track who raises hand.")
-                print("----------------------")
-                self.brainTrack.setTrackingWithPose(True)
-                
-            elif typeOfTracking == '2':
-                print("You chose to click who to track.")
-                print("----------------------")
-                self.brainTrack.setTrackingWithPose(False)
-            else:
-                didChooseOption = False
-                print("Oops! It seems you pressed wrong button. I forgive you, try again!")
-                print("----------------------")
-            print()
+        typeOfTracking = option
+        if typeOfTracking == '1':
+            self.brainTrack.setTrackingWithPose(True)
+            
+        else:
+            self.brainTrack.setTrackingWithPose(False)
+        print()
             
                 
         
@@ -230,6 +219,8 @@ class TelloMain(object):
                     
                     if writevideo == True:
                         videow.write(frame)
+                        
+                    # time.sleep(1 / self.FPS)
                 except Exception as e:
                     print(f'Error in mode_control: {e}')
                     break
@@ -251,6 +242,8 @@ if __name__ == "__main__":
     print("- Option 0: Show battery")
     print("- Option 1: Control")
     print("- Option 2: Track Human who raises hand")
+    print("- Option 3: Track Human by clicking")
+    
     
     print("Please type the option number (Eg: 1 or 2...)")
     
@@ -269,10 +262,15 @@ if __name__ == "__main__":
             print()
             tello.modeControl()
         elif option == '2':
-            print("You chose to TRACK!")
+            print("You chose to TRACK who raises hand!")
             print("----------------------")
             print()
-            tello.modeTrack()
+            tello.modeTrack('1')
+        elif option == '3':
+            print("You chose to TRACK by clicking!")
+            print("----------------------")
+            print()
+            tello.modeTrack('2')
         else:
             didChooseOption = False
             print("Oops! It seems you pressed wrong button. I forgive you, try again!")
