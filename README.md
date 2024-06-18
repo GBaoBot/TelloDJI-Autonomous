@@ -20,6 +20,6 @@ Libraries and Models:
 * To control the DJI Tello Drone, the library "djitellopy" was used due to its friendly API. OpenCV was used to stream video frames received from Tello Drone.
 * To track people in frame, Yolov8-pose was used due to its fast and accuracy, along with Kalman Filter to improve the performance.
 
-Future:
+## Future
 * I will try to make it work with different inputs. It can be prompt from user (Example: "Fly up and move forward but not too fast"). Or it can receive audio from micro on laptop. And users also should be allowed to control drone with hand gestures.
 * In terms of connection and control, I will try to apply PID control, and improve the quality of video stream.
