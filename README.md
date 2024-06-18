@@ -6,10 +6,9 @@ In this project, I used a DJI Tello EDU drone to do task of object following. Cu
 
 ### Run
 To run this code, paste this command line in terminal (or Powershell):
-'''
+```
 python TelloMain.py
-'''
-
+```
 After running, user can choose modes which are shown in the terminal, please follow instruction shown in the terminal.
 
 ### Modes
