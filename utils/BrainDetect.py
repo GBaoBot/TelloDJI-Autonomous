@@ -1,9 +1,9 @@
 from ultralytics import YOLO
 import cv2
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
-from mediapipe.framework.formats import landmark_pb2
-from mediapipe import solutions
+# from mediapipe.tasks import python
+# from mediapipe.tasks.python import vision
+# from mediapipe.framework.formats import landmark_pb2
+# from mediapipe import solutions
 
 class BrainDetect:
     def __init__(self, CONFIDENCE=0.5, DETECT=0) -> None:
@@ -55,7 +55,7 @@ class BrainDetect:
     
 
     # YOLOv8       
-    def setUpYOLOv8(self, MODEL=r"models/yolov8n.pt"):
+    def setUpYOLOv8(self, MODEL=r"models/yolov8n-face.pt"):
         self.model = YOLO(MODEL)
         self.model.to('cuda')
         

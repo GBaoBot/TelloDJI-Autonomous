@@ -30,7 +30,7 @@ class BrainTrack(BrainDetect):
         self.isTrackingwithPose = False
         
         # distance between object and drone
-        self.dist_setpoint = 150
+        self.dist_setpoint = 20
         self.area_setpoint = 25
         
         # processing frequency (to spare CPU time)
@@ -102,7 +102,7 @@ class BrainTrack(BrainDetect):
                 if self.track == False:
                     h, w = frame.shape[:2]
                     self.cx = w // 2
-                    self.cy = h // 2
+                    self.cy = h // 3
                     self.kf.init(self.cx, self.cy)
                     
                     self.kfarea.init(1, tp[1])

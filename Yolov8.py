@@ -2,11 +2,12 @@ from ultralytics import YOLO
 import cv2
 
 # Load YOLO model
-model = YOLO("yolov8n.pt")
-# model.to('cuda')
+path = r'models/yolov8n-face.pt'
+model = YOLO(path)
+model.to('cuda')
 
 # Load video
-path = 'C:\\Users\\GiaBao\\Documents\\VSC\\Robot\\TelloDJI-Autonomous\\TEST\\DroneTelloProject\\Data\\1030_AT_puppies_feat.jpg'
+
 cap = cv2.VideoCapture(0)
 cv2.namedWindow('frame', cv2.WINDOW_AUTOSIZE)
 
