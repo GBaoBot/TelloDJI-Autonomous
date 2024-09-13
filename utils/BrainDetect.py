@@ -20,9 +20,6 @@ class BrainDetect:
         # Model Object Detection
         self.model = None
         
-        # Model Human Pose Estimation
-        self.detectorPose = None
-        
         # Result of Detecting
         self.tp = []
         self.detections = []
@@ -34,24 +31,14 @@ class BrainDetect:
         # print("Did process clickCoor")
     
     
-    def detect(self, frame, trackWithPose=True):
+    def detect(self, frame):
         '''
         return tp, detections
         '''
-        
-        if trackWithPose:
-            if not self.didSetUpModel:
-                print("Did set up Pose Model")
-                # k = input()
-                self.setUpYOLOv8Pose()
-                self.didSetUpModel = True
-            return self.detectWithYOLOv8Pose(frame)
-        
-        else:
-            if not self.didSetUpModel:
-                self.setUpYOLOv8()
-                self.didSetUpModel = True
-            return self.detectWithYOLOv8(frame)
+        if not self.didSetUpModel:
+            self.setUpYOLOv8()
+            self.didSetUpModel = True
+        return self.detectWithYOLOv8(frame)
     
 
     # YOLOv8       
@@ -64,10 +51,6 @@ class BrainDetect:
         
         result = self.model.track(frame, classes=[self.clsDetect], conf=self.conf, persist=True, verbose=False)[0]
         tp, detections = self.processResultYOLOv8(frame, result)
-        
-        # if len(tp) != 0 and len(detections) != 0:
-        #     self.tp = tp
-        #     self.detections = detections
         
         return tp, detections
     
@@ -138,107 +121,6 @@ class BrainDetect:
         _, det = self.detect(img)
         # print(det)
         self.draw_detections(det,img)
-
-    
-    def setUpPoseEstimation(self):
-        base_options = python.BaseOptions(model_asset_path='pose_landmarker_lite.task')
-
-        options = vision.PoseLandmarkerOptions(
-            base_options=base_options,
-            output_segmentation_masks=True)
-        
-        self.detectorPose = vision.PoseLandmarker.create_from_options(options)
-    
-    # YOLOv8-pose
-    def setUpYOLOv8Pose(self, MODEL=r'models/yolov8n-pose.pt'):
-        self.model = YOLO(MODEL)
-        self.model.to('cuda')
-
-    
-    def detectWithYOLOv8Pose(self, frame):
-        result = self.model.track(frame, classes=[self.clsDetect], conf=self.conf, persist=True, verbose=False)[0]
-        
-        # The result now is a list of obj in image
-        tp, detections = self.processResultYOLOv8Pose(frame, result)
-        
-        return tp, detections
-    
-    
-    def processResultYOLOv8Pose(self, frame, result):
-        '''
-        result: list of object detected by YOLO
-        '''
-        h,w = frame.shape[:2]
-        tp =[]
-        detections = []
-        
-        if len(result) != 0:
-            obj = None
-            doesAnyRaiseHand = False
-            
-            # Check whether anyone is raising hand
-            for objDetected in result:
-                if self.isRaiseHand_YOLOv8(objDetected):
-                    obj = objDetected
-                    # print("Detected Object")
-                    doesAnyRaiseHand = True
-                    break
-            
-            # If nobody raises hand, Then track object which was detected in the previous time.
-            if not doesAnyRaiseHand and self.idTracking != -1:
-                for objDetected in result:
-                    try:
-                        idDetected = objDetected.boxes.id.tolist()[0]
-                        if idDetected == self.idTracking:
-                            obj = objDetected
-                            break
-                    except Exception as e:
-                        print(f"Cannot extract id: {e}")
-                        break
-            
-            if obj is not None:
-                # id = id
-                try:
-                    self.idTracking = obj.boxes.id.tolist()[0]
-                except Exception as e:
-                    print(f"Object does not have id: {e}")
-                if self.clsDetect == 0:
-                    # Box
-                    box_xyxy = obj.boxes.xyxy[0].tolist() # [x1, y1, x2, y2]
-                    box_xyxy = [int(x) for x in box_xyxy]
-                    box_xywh = [box_xyxy[0], box_xyxy[1], box_xyxy[2] - box_xyxy[0], box_xyxy[3] - box_xyxy[1]]
-                    detections.append(box_xywh)
-                    
-                    # Area ratio
-                    area_frame = w*h
-                    area_det = detections[0][2] * detections[0][3]
-                    area_ratio = int((area_det/area_frame)*1000)
-                    tp = [detections[0][0] + detections[0][2]//2, detections[0][1] + detections[0][3]//3, area_ratio]
-                        
-                else:
-                    box_xyxy = obj.boxes.xyxy[0].tolist() # [x1, y1, x2, y2]
-                    box_xyhw = [box_xyxy[0], box_xyxy[1], box_xyxy[2] - box_xyxy[0], box_xyxy[3] - box_xyxy[1]]
-                    detections.append(box_xyhw)
-                    tp = [detections[0][0] + detections[0][2]//2, detections[0][1] + detections[0][3]//2, detections[0][3]]
-            
-        return tp, detections
-    
-    
-    def isRaiseHand_YOLOv8(self, obj):
-        keyPoints = obj.keypoints.xy.tolist()[0]
-        
-        leftShoulder, rightShoulder = keyPoints[5:7]
-        leftWrist, rightWrist = keyPoints[9:11]
-        
-        distLeft = leftShoulder[1] - leftWrist[1] 
-        distRight = rightShoulder[1] - rightWrist[1]
-        
-        if (leftShoulder[1] != 0 and leftWrist[1] != 0 and distLeft > 5) or (rightShoulder[1] != 0 and rightWrist[1] != 0 and distRight > 5):
-            # print("Yes he is raising hand")
-            return True
-        # print("No Nobody raises their hands.")
-        return False
-        
             
     def draw_landmarks_on_image(self, rgb_image, detection_result):
         pose_landmarks_list = detection_result.pose_landmarks

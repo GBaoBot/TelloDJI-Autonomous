@@ -161,7 +161,7 @@ class TelloMain(object):
             cv2.destroyAllWindows() 
 
 
-    def modeTrack(self, option='2'):
+    def modeTrack(self):
         self.connect()
         self.camera_on()
         self.start_communication()
@@ -176,22 +176,9 @@ class TelloMain(object):
         self.brainTrack = BrainTrack(self)
         self.brainTrack.set_tracking()
         self.brainTrack.onTracking()
-        print("There are 2 ways of tracking:")
-        print("- Option 1: Track who raises their hand")
-        print("- Option 2: Track who you clicked (chose) on window")
+        print("Track who you clicked (chose) on window")
         print("Please type the option number (Eg: 1 or 2...)")
-        
-        
-        typeOfTracking = option
-        if typeOfTracking == '1':
-            self.brainTrack.setTrackingWithPose(True)
             
-        else:
-            self.brainTrack.setTrackingWithPose(False)
-        print()
-            
-                
-        
         # Control
         self.brainControl = BrainControl(self, self.speed)
         self.brainControl.startReadFromKeyboard()
@@ -241,8 +228,7 @@ if __name__ == "__main__":
     print("Please choose option:")
     print("- Option 0: Show battery")
     print("- Option 1: Control")
-    print("- Option 2: Track Human who raises hand")
-    print("- Option 3: Track Human by clicking")
+    print("- Option 2: Track Human by clicking")
     
     
     print("Please type the option number (Eg: 1 or 2...)")
@@ -262,15 +248,10 @@ if __name__ == "__main__":
             print()
             tello.modeControl()
         elif option == '2':
-            print("You chose to TRACK who raises hand!")
-            print("----------------------")
-            print()
-            tello.modeTrack('1')
-        elif option == '3':
             print("You chose to TRACK by clicking!")
             print("----------------------")
             print()
-            tello.modeTrack('2')
+            tello.modeTrack()
         else:
             didChooseOption = False
             print("Oops! It seems you pressed wrong button. I forgive you, try again!")

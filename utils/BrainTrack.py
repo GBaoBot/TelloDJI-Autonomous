@@ -21,16 +21,17 @@ class BrainTrack(BrainDetect):
         self.frame = None
         self.det = None
         self.tp = None
+        self.cx = 0
+        self.cy = 0
         
         # tracking options
         self.use_vertical_tracking = True
         self.use_rotation_tracking = True
         self.use_horizontal_tracking = True
         self.use_distance_tracking = True
-        self.isTrackingwithPose = False
         
         # distance between object and drone
-        self.dist_setpoint = 20
+        self.dist_setpoint = 100
         self.area_setpoint = 25
         
         # processing frequency (to spare CPU time)
@@ -40,7 +41,7 @@ class BrainTrack(BrainDetect):
         # Kalman estimator scale factors
         self.kvscale = 6
         self.khscale = 4
-        self.distscale = 3
+        self.distscale = 5
         
         # Set up model
         # self.setUpYOLOv8(MODEL)
@@ -70,9 +71,6 @@ class BrainTrack(BrainDetect):
         
     def isTracking(self):
         return self.tracking
-    
-    def setTrackingWithPose(self, isTrackwithPose):
-        self.isTrackingwithPose = isTrackwithPose
         
     def process_frame(self, frame):
         # frame = cv2.resize()
@@ -93,7 +91,7 @@ class BrainTrack(BrainDetect):
             tp = None
             det = None
             if self.tracking:
-                tp, det = self.detect(frame, trackWithPose=self.isTrackingwithPose)
+                tp, det = self.detect(frame)
             
             if det is not None and len(det) > 0:
                 self.det = det
@@ -102,7 +100,7 @@ class BrainTrack(BrainDetect):
                 if self.track == False:
                     h, w = frame.shape[:2]
                     self.cx = w // 2
-                    self.cy = h // 3
+                    self.cy = h // 2
                     self.kf.init(self.cx, self.cy)
                     
                     self.kfarea.init(1, tp[1])
@@ -167,5 +165,8 @@ class BrainTrack(BrainDetect):
                 for val in self.det:
                     cv2.rectangle(img,(val[0],val[1]),(val[0]+val[2],val[1]+val[3]),[0,255,0],2)
                     cv2.circle(img,(self.tp[0],self.tp[1]),3,[0,0,255],-1)
-                cv2.circle(img,(int(w/2),int(h/2)),4,[0,255,0],1)
-                cv2.line(img,(int(w/2),int(h/2)),(self.tp[0],self.tp[1]),[0,255,0],2)
+                cv2.circle(img,(int(self.cx),int(self.cy)),4,[0,255,0],1)
+                cv2.line(img,(int(self.cx),int(self.cy)),(self.tp[0],self.tp[1]),[0,255,0],2)
+                
+    # self.cx = w // 2
+    # self.cy = h // 3
