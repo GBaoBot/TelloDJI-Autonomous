@@ -6,13 +6,12 @@ import cv2
 # from mediapipe import solutions
 
 class BrainDetect:
-    def __init__(self, CONFIDENCE=0.5, DETECT=0) -> None:
+    def __init__(self, CONFIDENCE=0.5) -> None:
         
         # Setup Model?
         self.didSetUpModel = False
         
         self.conf = CONFIDENCE
-        self.clsDetect = DETECT
         
         # Users' inputs
         self.clickCoor = (0,0)
@@ -42,14 +41,14 @@ class BrainDetect:
     
 
     # YOLOv8       
-    def setUpYOLOv8(self, MODEL=r"models/yolov8n-face.pt"):
+    def setUpYOLOv8(self, MODEL=r"models/yolov8m-face.pt"):
         self.model = YOLO(MODEL)
         self.model.to('cuda')
         
          
     def detectWithYOLOv8(self, frame):
         
-        result = self.model.track(frame, classes=[self.clsDetect], conf=self.conf, persist=True, verbose=False)[0]
+        result = self.model.track(frame, conf=self.conf, persist=True, verbose=False)[0]
         tp, detections = self.processResultYOLOv8(frame, result)
         
         return tp, detections
@@ -66,12 +65,15 @@ class BrainDetect:
                 x, y = self.clickCoor
                 for objDetected in result:
                     x1, y1, x2, y2 = objDetected.boxes.xyxy[0].tolist()
-                    if x < x2 and x > x1 and y < y2 and y > y1:
+                    if x1 <= x <= x2 and y1 <= y <= y2:
                         obj = objDetected
-                        self.clickCoor = (0, 0)
-                        print("Did set it back 0-0")
+                        # self.clickCoor = (0, 0)
+                        # print("Did set it back 0-0")
                         break
             elif self.idTracking != -1:
+                print("---------------")
+                print(self.idTracking)
+                print("---------------")
                 for objDetected in result:
                     try:
                         idDetected = objDetected.boxes.id.tolist()[0]
@@ -87,28 +89,18 @@ class BrainDetect:
                     self.idTracking = obj.boxes.id.tolist()[0]
                 except Exception as e:
                     print(f"Object does not have id: {e}")
-                if self.clsDetect == 0:
 
-                    # if len(result) != 0:
-                    # id = obj.boxes.id.item()
-                    # Box
-                    box_xyxy = obj.boxes.xyxy[0].tolist() # [x1, y1, x2, y2]
-                    box_xyxy = [int(x) for x in box_xyxy]
-                    box_xywh = [box_xyxy[0], box_xyxy[1], box_xyxy[2] - box_xyxy[0], box_xyxy[3] - box_xyxy[1]]
-                    detections.append(box_xywh)
-                    
-                    # Area ratio
-                    area_frame = w*h
-                    area_det = detections[0][2] * detections[0][3]
-                    area_ratio = int((area_det/area_frame)*1000)
-                    tp = [detections[0][0] + detections[0][2]//2, detections[0][1] + detections[0][3]//3, area_ratio]
-                        
-                else:
-                    box_xyxy = obj.boxes.xyxy[0].tolist() # [x1, y1, x2, y2]
-                    box_xyhw = [box_xyxy[0], box_xyxy[1], box_xyxy[2] - box_xyxy[0], box_xyxy[3] - box_xyxy[1]]
-                    detections.append(box_xyhw)
-                    tp = [detections[0][0] + detections[0][2]//2, detections[0][1] + detections[0][3]//2, detections[0][3]]
-            
+                # if len(result) != 0:
+                # id = obj.boxes.id.item()
+                # Box
+                box_xyxy = obj.boxes.xyxy[0].tolist() # [x1, y1, x2, y2]
+                box_xyxy = [int(x) for x in box_xyxy]
+                box_xywh = [box_xyxy[0], box_xyxy[1], box_xyxy[2] - box_xyxy[0], box_xyxy[3] - box_xyxy[1]]
+                detections.append(box_xywh)
+                
+                # Area ratio
+                area_det = detections[0][2] * detections[0][3]
+                tp = [detections[0][0] + detections[0][2]//2, detections[0][1] + detections[0][3]//2, area_det, detections[0][2], detections[0][3]]
         return tp, detections
     
     

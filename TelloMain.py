@@ -1,11 +1,20 @@
-from djitellopy import Tello 
+from djitellopy import Tello
 from queue import Queue
-import cv2 
+import cv2
+import threading
 import time
-from utils.SafeThread import *
-from utils.BrainControl import *
-from utils.BrainTrack import *
-# This would be the main object of tello, all the process will be conducted in another file
+from utils.SafeThread import SafeThread
+from utils.BrainControl import BrainControl
+from utils.BrainTrack import BrainTrack
+
+# Constants
+FRAME_SIZE = (320, 240)
+FPS = 30
+VIDEO_BITRATE = Tello.BITRATE_1MBPS
+VIDEO_RESOLUTION = 'l'
+FONT_SCALE = 0.5
+THICKNESS = 1
+PSPEED_VIDEO = 1
  
 class TelloMain(object):  
     def __init__(self, speed=10): 
@@ -13,18 +22,14 @@ class TelloMain(object):
         self.tello = Tello() 
         
         # Video
-        self.q = Queue()
-        self.q.maxsize = 1
-
-        self.frame_size = (640, 640)
+        self.q = Queue(maxsize=50)
+        self.frame_size = FRAME_SIZE
         self.videoEvent = threading.Event()
-        self.pSpeedVideo = 1
         self.clickCoor = (0, 0)
-        self.FPS = 30
         
         # Control
         self.shouldStop = True
-        self.speed = speed # Max Speed
+        self.speed = speed
         self.for_back_velocity = 0 
         self.left_right_velocity = 0 
         self.up_down_velocity = 0 
@@ -39,9 +44,11 @@ class TelloMain(object):
         
         # Thread
         self.videoThread = SafeThread(target=self.__video)
-        self.controlThread = SafeThread(target=self.__update)
+        # self.controlThread = SafeThread(target=self.__update)
         
-        
+    def get_max_speed(self):
+        return self.speed
+    
     def connect(self):
         try:
             self.tello.connect()
@@ -49,14 +56,16 @@ class TelloMain(object):
         except Exception as e:
             print(f"Error connecting to Tello: {e}")
 
-
     def camera_on(self):
         try:
             self.tello.streamon()
+            self.tello.set_video_resolution(VIDEO_RESOLUTION)
+            self.tello.set_video_bitrate(VIDEO_BITRATE)
             self.frame_read = self.tello.get_frame_read()
-            # self.videoEvent.wait(0.5)  # Wait for the stream to initialize properly
-            
-            if self.videoThread.is_alive() is not True:  self.videoThread.start()
+
+            if not self.videoThread.is_alive():  
+                self.videoThread.start()
+                
         except Exception as e:
             # if self.videoThread.is_alive(): self.videoThread.stop()
             print(f"Error turning on camera: {e}")
@@ -79,10 +88,10 @@ class TelloMain(object):
                 frame = self.frame_read.frame
                 
                 if frame is not None:
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     frame = cv2.resize(frame, self.frame_size)
-                    
-                    self.q.put(frame)
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    if not self.q.full():
+                        self.q.put(frame)
                 
             except Exception as e:
                 pass
@@ -101,26 +110,34 @@ class TelloMain(object):
         self.left_right_velocity = left_right_velocity 
         self.up_down_velocity = up_down_velocity 
         self.yaw_velocity = yaw_velocity 
-    
+        
+        self.__update()
+        
+        self.for_back_velocity = 0
+        self.left_right_velocity = 0 
+        self.up_down_velocity = 0 
+        self.yaw_velocity = 0
+        
+        self.__update() 
     
     def __update(self):
-        while True:
-            self.controlEvent.wait(0.01)
-            self.tello.send_rc_control(
-                self.left_right_velocity, 
-                self.for_back_velocity, 
-                self.up_down_velocity, 
-                self.yaw_velocity)
+        self.tello.send_rc_control(
+            self.left_right_velocity, 
+            self.for_back_velocity, 
+            self.up_down_velocity, 
+            self.yaw_velocity)
+        return True
             
             
     def start_communication(self):
-        if not self.controlThread.is_alive(): self.controlThread.start()
+        # if not self.controlThread.is_alive(): self.controlThread.start()
+        pass
     
             
     def stop_communication(self):
         self.tello.end()
         self.controlEvent.wait(0.1)
-        self.controlThread.stop()
+        # self.controlThread.stop()
 
 
     def battery(self): 
@@ -223,7 +240,7 @@ class TelloMain(object):
         
         
 if __name__ == "__main__":
-    tello = TelloMain(40)
+    tello = TelloMain(30)
     
     print("Please choose option:")
     print("- Option 0: Show battery")

@@ -1,10 +1,11 @@
 from utils.SafeThread import *
 from utils.BrainDetect import *
 from utils.Kalman import *
+from utils.PID import *
 # from TelloMain import *
 class BrainTrack(BrainDetect):
-    def __init__(self, tello, CONFIDENCE=0.3, DETECT=0) -> None:
-        super().__init__(CONFIDENCE, DETECT)
+    def __init__(self, tello, CONFIDENCE=0.3) -> None:
+        super().__init__(CONFIDENCE)
         
         self.tello = tello
         self.tracking = False
@@ -12,27 +13,30 @@ class BrainTrack(BrainDetect):
         # ticker for timebase
         self.ticker = threading.Event()
         
-        # Kalman estimators
-        self.kf = Kalman()
-        self.kfarea= Kalman()
+        # PID
+        self.normalisation_scale = 100
+        self.h = 480
+        self.w = 640
+        self.pid_x = PID(0.5, r'utils/config/pid_params.yaml')
+        self.pid_y = PID(0.5, r'utils/config/pid_params.yaml')
+        self.pid_z = PID(0.5, r'utils/config/pid_params.yaml')
+        
+        # pid_depth = PID(self.normalisation_scale, r'utils/config/pid_params.yaml')
         
         #init 
         self.track = False
         self.frame = None
         self.det = None
         self.tp = None
-        self.cx = 0
-        self.cy = 0
+        self.cx = 0.5
+        self.cy = 0.5
+        self.cz = 0.2
         
         # tracking options
         self.use_vertical_tracking = True
         self.use_rotation_tracking = True
-        self.use_horizontal_tracking = True
+        self.use_horizontal_tracking = False
         self.use_distance_tracking = True
-        
-        # distance between object and drone
-        self.dist_setpoint = 100
-        self.area_setpoint = 25
         
         # processing frequency (to spare CPU time)
         self.cycle_counter = 1
@@ -94,47 +98,45 @@ class BrainTrack(BrainDetect):
                 tp, det = self.detect(frame)
             
             if det is not None and len(det) > 0:
+                
                 self.det = det
                 self.tp = tp
                 
                 if self.track == False:
-                    h, w = frame.shape[:2]
-                    self.cx = w // 2
-                    self.cy = h // 2
-                    self.kf.init(self.cx, self.cy)
-                    
-                    self.kfarea.init(1, tp[1])
-                    
+                    self.h, self.w = frame.shape[:2]
                     self.track = True
                     
-                # process corrections, compute delta between two objects
-                _,cp = self.kf.predictAndUpdate(self.cx,self.cy,True)
-
-                # calculate delta over 2 axis
-                mvx = -int((cp[0]-tp[0])//self.kvscale)
-                mvy = int((cp[1]-tp[1])//self.khscale)
-                
-                if self.use_distance_tracking:
-                    # use detection y value to estimate object distance
-                    obj_y = tp[2]
-                    _, ocp = self.kfarea.predictAndUpdate(1, obj_y, True)
-                    dist = int((ocp[1]-self.dist_setpoint)//self.distscale)
-                
-                # Fill out variables to be sent in the tello command
-                # don't combine horizontal and rotation
+                x_feedback = tp[0] / self.w
+                y_feedback = tp[1] / self.h
+                z_feedback = tp[4] / self.h
+                x_control_effort, x_error = self.pid_x.control_effort(self.cx, x_feedback)
+                y_control_effort, y_error = self.pid_y.control_effort(self.cy, y_feedback)
+                z_control_effort, z_error = self.pid_z.control_effort_depth(self.cz, z_feedback)      
+                # print("---------------")
+                # print(x_control_effort)
+                # print(y_control_effort)
+                # print(z_control_effort)
+                # print("---------------")
+                          
+                max_speed = self.tello.get_max_speed()
+                    
                 if self.use_horizontal_tracking:
                     rx = 0
-                    vx = mvx
+                    vx = -int(x_control_effort * max_speed)
+                    
                 if self.use_rotation_tracking:
                     vx = 0
-                    rx = mvx
+                    rx = -int(x_control_effort * max_speed)
 
                 if self.use_vertical_tracking:
-                    vy = mvy
+                    vy = int(y_control_effort * max_speed)
+                
+                if self.use_distance_tracking:
+                    vz = int(z_control_effort * max_speed)
                     
                 # Send Command to Tello
                 leftright = vx
-                fwdbackw = -dist
+                fwdbackw = vz
                 updown = vy
                 yaw = rx
                 
@@ -149,7 +151,6 @@ class BrainTrack(BrainDetect):
                 self.tello.updateVelocity(leftright, fwdbackw, updown, yaw)
         self.cycle_counter += 1
             
-        
     def draw_detections(self,img):
         battery = self.tello.get_battery()
         
@@ -158,15 +159,20 @@ class BrainTrack(BrainDetect):
             h,w = img.shape[:2]
             battery_info = f"Battery: {battery}"
             tracking_info = f"Tracking: {self.isTracking()}"
-            cv2.putText(img, battery_info, (10, h-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_4)
-            cv2.putText(img, tracking_info, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_4)
+            
+            # Adjust font scale and thickness
+            font_scale = 0.5
+            thickness = 1
+            
+            cv2.putText(img, battery_info, (10, h-10), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 255, 255), thickness, cv2.LINE_4)
+            cv2.putText(img, tracking_info, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 255, 255), thickness, cv2.LINE_4)
 
             if self.det is not None:            
                 for val in self.det:
                     cv2.rectangle(img,(val[0],val[1]),(val[0]+val[2],val[1]+val[3]),[0,255,0],2)
                     cv2.circle(img,(self.tp[0],self.tp[1]),3,[0,0,255],-1)
-                cv2.circle(img,(int(self.cx),int(self.cy)),4,[0,255,0],1)
-                cv2.line(img,(int(self.cx),int(self.cy)),(self.tp[0],self.tp[1]),[0,255,0],2)
+                cv2.circle(img,(int(self.cx * self.w),int(self.cy * self.h)),4,[0,255,0],1)
+                cv2.line(img,(int(self.cx * self.w),int(self.cy * self.h)),(self.tp[0],self.tp[1]),[0,255,0],2)
                 
     # self.cx = w // 2
     # self.cy = h // 3

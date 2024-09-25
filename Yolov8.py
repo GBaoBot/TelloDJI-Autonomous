@@ -2,7 +2,7 @@ from ultralytics import YOLO
 import cv2
 
 # Load YOLO model
-path = r'models/yolov8n-face.pt'
+path = r'models/yolov8m-face.pt'
 model = YOLO(path)
 model.to('cuda')
 
@@ -18,11 +18,17 @@ while True:
         print("Cannot read frames!!")
         break
     
+    print("Frame size:", frame.shape)  # {{ edit_1 }}
+    
     # Process frame
     frame = cv2.flip(frame, 1)
 
     results = model.track(frame, tracker="botsort.yaml", persist=True, verbose=False)
-    # print(results[0][0].boxes.xyxy)
+
+    # Print positions of detected objects
+    for result in results[0].boxes:
+        print("Detected object position:", result.xyxy)  # {{ edit_2 }}
+    
     detected_frame = results[0].plot()
     cv2.imshow('frame', detected_frame)
 
