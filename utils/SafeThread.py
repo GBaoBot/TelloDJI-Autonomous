@@ -1,6 +1,7 @@
 import threading
 
-class SafeThread (threading.Thread):
+
+class SafeThread(threading.Thread):
     def __init__(self, target) -> None:
         threading.Thread.__init__(self)
         self.daemon = True

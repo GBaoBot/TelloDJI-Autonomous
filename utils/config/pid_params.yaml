@@ -2,6 +2,6 @@ pid_params:
   Kp: 0.95
   Ki: 0.001
   Kd: 0.01
-  Kp_depth: 0.5
+  Kp_depth: 0.9
   Ki_depth: 0.05
   Kd_depth: 0.01

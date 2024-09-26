@@ -1,8 +1,11 @@
 import yaml
 
+
 class PID:
     def __init__(self, normalisation_scale, param_file):
-        self.normalisation_scale = normalisation_scale  # equate to 1 if don't need to normalize
+        self.normalisation_scale = (
+            normalisation_scale  # equate to 1 if don't need to normalize
+        )
         self.compute_for_windup_limits_ready = False
         self.upper_windup_limit = 0
         self.lower_windup_limit = 0
@@ -12,14 +15,14 @@ class PID:
         self.enabled = True  # PID is enabled by default
 
         # Load PID parameters from the YAML file
-        with open(param_file, 'r') as file:
+        with open(param_file, "r") as file:
             params = yaml.safe_load(file)
-            self.Kp = params['pid_params']['Kp']
-            self.Ki = params['pid_params']['Ki']
-            self.Kd = params['pid_params']['Kd']
-            self.Kp_depth = params['pid_params']['Kp_depth']
-            self.Ki_depth = params['pid_params']['Ki_depth']
-            self.Kd_depth = params['pid_params']['Kd_depth']
+            self.Kp = params["pid_params"]["Kp"]
+            self.Ki = params["pid_params"]["Ki"]
+            self.Kd = params["pid_params"]["Kd"]
+            self.Kp_depth = params["pid_params"]["Kp_depth"]
+            self.Ki_depth = params["pid_params"]["Ki_depth"]
+            self.Kd_depth = params["pid_params"]["Kd_depth"]
 
     def control_effort(self, setpoint, feedback):
         if not self.enabled:
@@ -42,7 +45,9 @@ class PID:
 
         # Integral control components
         self.integral_sum += 0.5 * self.Ki * self.dt * (error + self.e_prev)
-        self.integral_sum = self.clamp(self.integral_sum, self.lower_windup_limit, self.upper_windup_limit)
+        self.integral_sum = self.clamp(
+            self.integral_sum, self.lower_windup_limit, self.upper_windup_limit
+        )
 
         self.e_prev = error  # Update previous error for the next derivative calculation
 
@@ -71,7 +76,9 @@ class PID:
 
         # Integral control components
         self.integral_sum += 0.5 * self.Ki_depth * self.dt * (error + self.e_prev)
-        self.integral_sum = self.clamp(self.integral_sum, self.lower_windup_limit, self.upper_windup_limit)
+        self.integral_sum = self.clamp(
+            self.integral_sum, self.lower_windup_limit, self.upper_windup_limit
+        )
 
         total_control_effort = self.Kp_depth * error + D_control + self.integral_sum
 
